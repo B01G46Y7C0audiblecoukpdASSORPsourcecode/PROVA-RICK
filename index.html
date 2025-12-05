@@ -1,0 +1,751 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crow – Player</title>
+
+<style>
+/* ------------------ GENERAL ------------------ */
+
+* { box-sizing: border-box; }
+
+#root-scale {
+    transform: scale(0.97);
+    transform-origin: top center;
+}
+
+html, body {
+    overflow: hidden;
+    height: 100%;
+    touch-action: pan-x pan-y;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #060E17;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: white;
+    text-align: center;
+    user-select: none;
+    overflow-x: hidden;
+}
+
+html {
+    overflow-x: hidden;
+    position: relative;
+    max-width: 100%;
+}
+
+/* ------------------ WIDTH ALIGNMENT ------------------ */
+.cover-container {
+    width: 100%;
+    max-width: 520px;
+    margin: 37px auto 0;
+    transform: translateY(25px)
+}
+.timeline-container,
+.controls {
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.bottom-row {
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    gap: 33px;
+}
+
+/* ------------------ COVER ------------------ */
+.cover {
+    width: 100%;
+    max-width: 286px;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.55);
+}
+h2 { margin: 18px 0 5px; font-size: 24px; font-weight: 600; }
+h4 { margin: 0 0 25px; font-size: 15px; font-weight: 300; color: #cfcfcf; }
+
+/* ★ NASCONDE I TESTI SENZA MUOVERE IL LAYOUT ★ */
+h2, h4 { visibility: hidden; }
+
+/* ------------------ CHAPTER BUTTON (INGRANDITO + GRASSETTO) ------------------ */
+.chapter-button {
+    margin-top: 48px;
+    font-size: 18px;
+    font-weight: 700;
+    opacity: 0.9;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+}
+
+/* ------------------ TIMELINE ------------------ */
+.timeline-container { margin-top: 12px; 
+transform: scale(0.92);      /* ← Rimpicciolisce tutta la timeline */
+    transform-origin: center;
+}
+
+input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(
+        to right,
+        #ffbf00 var(--progress, 0%),
+        #223247 var(--progress, 0%)
+    );
+    border-radius: 2px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    background: #ffbf00;
+    border-radius: 50%;
+}
+
+.timestamps {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+/* ------------------ TOP CONTROLS ------------------ */
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn {
+    background: none !important;
+    border: none !important;
+    padding: 0;
+}
+
+/* ------------------ SKIP + FRECCE ------------------ */
+.skip-icon { width: 78px; height: 78px; }
+.arrow-icon { width:64px; height:64px; }
+
+#back30 img { transform: translateX(-14px); }
+#forward30 img { transform: translateX(14px); }
+
+/* ------------------ PLAY BUTTON (MODIFICATO) ------------------ */
+/* Pulsante esterno più grande e leggermente abbassato */
+.play-btn {
+    background: white;
+    width: 74px;          /* ← ING RANDITO */
+    height: 74px;         /* ← ING RANDITO */
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink: 0;
+    transform: translateY(0px);   /* ← ABBASSATO */
+}
+
+/* Cerchio/play più piccolo */
+.play-btn svg {
+    width: 54px;   /* ← RIMPICCIOLITO */
+    height: 54px;  /* ← RIMPICCIOLITO */
+}
+
+/* ------------------ BOTTOM ROW ------------------ */
+.bottom-row {
+    margin-top: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;   
+}
+
+.bottom-item {
+    flex: 1;
+    max-width: 90px;
+    text-align: center;
+}
+
+.bottom-label {
+    font-size: 14px;
+    opacity: 0.40;
+}
+
+#speedButton .bottom-label {
+    opacity: 1 !important;
+    color: #ffffff !important;
+}
+
+.bottom-item.disabled .bottom-img {
+    opacity: 0.35 !important;
+}
+
+.bottom-icon-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 6px auto;
+}
+
+.speed-spacer {
+    width: 48px;
+    height: 48px;
+    opacity: 0;
+    margin: 0 auto 6px auto;
+}
+
+.bottom-item.disabled .bottom-icon-box {
+    width: 48px;
+    height: 48px;
+}
+
+.bottom-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.75;
+}
+
+/* ------------------ SPEED ------------------ */
+#speedButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: -28px;
+}
+
+.speed-box-container {
+    height: 22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:6px;
+    transform: translateY(-10px); 
+}
+
+#speedNumber {
+    font-size:20px;
+    font-weight:600;
+    line-height:20px;
+}
+
+#speedX {
+    margin-left:2px;
+    font-size:18px;
+    font-weight:600;
+    line-height:18px;
+}
+
+/* ------------------ OVERLAY ------------------ */
+.overlay-blur {
+    position: fixed;
+    top:0; left:0;
+    width:100vw; height:100vh;
+    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.4);
+    opacity:0;
+    pointer-events:none;
+    transition:0.25s ease;
+}
+
+/* ------------------ CHAPTER MENU ------------------ */
+.chapter-menu {
+    position: fixed;
+    left: 0;
+    bottom: -90%;
+    width: 100%;
+    height: 82%;
+    background: #0D1E2C;
+    border-radius: 22px 22px 0 0;
+    overflow-y: scroll;
+    transition: 0.35s ease;
+}
+
+.chapter-header {
+    position: sticky;
+    top:0;
+    background:#0D1E2C;
+    padding:16px 0 12px;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.chapter-close {
+    position:absolute; left:22px;
+    background:none; border:none;
+    font-size:34px; color:white; opacity:.85;
+}
+
+.chapter-title {
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.4px;
+}
+
+.chapter-tabs {
+    display:flex;
+    justify-content:center;
+    gap:38px;
+    background:#0D1E2C;
+    padding-top:6px;
+}
+
+.chapter-tab {
+    font-size:16px;
+    opacity:.65;
+    padding-bottom:8px;
+}
+
+.chapter-tab.active {
+    opacity:1;
+    font-weight:600;
+}
+
+#tabNext {
+    pointer-events:none !important;
+    cursor:default !important;
+    opacity:0.35 !important;
+}
+
+.chapter-underline {
+    width:52px;
+    height:2px;
+    background:#4AA3FF;
+    margin-bottom:12px;
+    margin-left:0;
+    transition:0.25s ease;
+}
+
+#chapterList { padding-bottom:40px; }
+
+.chapter-row {
+    width:88%;
+    margin:12px auto;
+    background:#112435;
+    padding:10px 20px;
+    border-radius:16px;
+    display:flex;
+    justify-content:space-between;
+    font-size:17px;
+}
+
+/* ------------------ SPEED MENU ------------------ */
+#speedMenu {
+    position: fixed;
+    left: 0;
+    bottom: -60%;
+    width: 100%;
+    height: 33%;
+    background: #0D1E2C;
+    border-radius: 22px 22px 0 0;
+    transition: 0.35s ease;
+    padding-top: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.speed-handle {
+    width: 42px;
+    height: 5px;
+    background: #ffffff33;
+    border-radius: 3px;
+    margin: 0 auto 16px;
+}
+
+.speed-title {
+    text-align:center;
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:18px;
+}
+
+.speed-grid {
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    width:88%;
+    margin:0 auto;
+}
+
+.speed-btn {
+    background:#112435;
+    border-radius:16px;
+    padding:14px 0;
+    font-size:17px;
+}
+
+.speed-btn.active {
+    outline:2px solid #4AA3FF;
+}
+
+/* --- FIX SELEZIONI MULTIPLE NEL MENU SPEED (iOS + Android) --- */
+
+.speed-grid {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.speed-btn {
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation;
+    user-select: none;
+    outline: none !important;
+}
+
+.speed-btn:active,
+.speed-btn:focus,
+.speed-btn:focus-visible {
+    background: #112435 !important; /* stesso colore normale */
+    outline: none !important;
+}
+
+</style>
+</head>
+
+<body>
+<div id="root-scale">
+
+
+<!-- COVER -->
+<div class="cover-container">
+    <img class="cover" src="https://i.imgur.com/AudDUSO.jpeg">
+    <h2>Crow</h2>
+    <h4>Read by the Author – Ted Hughes</h4>
+</div>
+
+<!-- BUTTON CHAPTER -->
+<div id="chapterButton" class="chapter-button">≡ Chapter 1</div>
+
+<!-- TIMELINE -->
+<div class="timeline-container">
+    <input type="range" id="seekbar" value="0" min="0" max="6480" step="1">
+    <div class="timestamps">
+        <span id="current">0:00</span>
+        <span id="remaining">– 1:48:00</span>
+    </div>
+</div>
+
+<!-- TOP CONTROLS -->
+<div class="controls">
+
+    <div class="ctrl-group">
+        <button class="btn" id="prevChapter">
+            <img src="https://i.imgur.com/uzzRfnf.png" class="arrow-icon">
+        </button>
+        <button class="btn" id="back30">
+            <img src="https://i.imgur.com/OZR3OwR.png" class="skip-icon">
+        </button>
+    </div>
+
+    <button class="play-btn" id="playBtn">
+        <svg id="playIcon" viewBox="0 0 42 42">
+            <polygon points="15,9 34,21 15,33" fill="#060E17"/>
+        </svg>
+    </button>
+
+    <div class="ctrl-group">
+        <button class="btn" id="forward30">
+            <img src="https://i.imgur.com/WUCkZ1n.png" class="skip-icon">
+        </button>
+        <button class="btn" id="nextChapter">
+            <img src="https://i.imgur.com/ss1YvmU.png" class="arrow-icon">
+        </button>
+    </div>
+
+</div>
+
+<!-- BOTTOM ROW -->
+<div class="bottom-row">
+
+    <!-- SPEED -->
+    <div class="bottom-item" id="speedButton">
+        <div class="bottom-icon-box speed-spacer"></div>
+        <div class="speed-box-container">
+            <span id="speedNumber">1,0</span><span id="speedX">×</span>
+        </div>
+        <div class="bottom-label">Speed</div>
+    </div>
+
+    <!-- CAR MODE -->
+    <div class="bottom-item disabled">
+        <div class="bottom-icon-box">
+            <img src="https://i.imgur.com/Y1cGH8X.png" class="bottom-img">
+        </div>
+        <div class="bottom-label">Car mode</div>
+    </div>
+
+    <!-- SLEEP TIMER -->
+    <div class="bottom-item disabled">
+        <div class="bottom-icon-box">
+            <img src="https://i.imgur.com/eWol0iJ.png" class="bottom-img">
+        </div>
+        <div class="bottom-label">Sleep timer</div>
+    </div>
+
+    <!-- CLIPS -->
+    <div class="bottom-item disabled">
+        <div class="bottom-icon-box">
+            <img src="https://i.imgur.com/SJD2E2j.png" class="bottom-img">
+        </div>
+        <div class="bottom-label">Clips</div>
+    </div>
+
+</div>
+
+<!-- AUDIO -->
+<audio id="audio" src="audio.mp3"></audio>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay-blur"></div>
+
+<!-- CHAPTER MENU -->
+<div id="chapterMenu" class="chapter-menu">
+
+    <div class="chapter-header">
+        <button id="closeChapterMenu" class="chapter-close">×</button>
+        <div class="chapter-title">Crow</div>
+    </div>
+
+    <div class="chapter-tabs">
+        <div id="tabChapters" class="chapter-tab active">Chapters</div>
+        <div id="tabNext" class="chapter-tab">Up next</div>
+    </div>
+
+    <div id="chapterUnderline" class="chapter-underline"></div>
+
+    <div id="chapterList"></div>
+
+</div>
+
+<!-- SPEED MENU -->
+<div id="speedMenu">
+    <div class="speed-handle"></div>
+    <div class="speed-title">Speed</div>
+    <div class="speed-grid" id="speedGrid"></div>
+</div>
+
+<script>
+/* ---------------- TIMELINE ---------------- */
+const TOTAL_FAKE_DURATION = 6480;
+let fakeCurrentTime = 0;
+let fakeInterval = null;
+let currentChapter = 1;
+let timelineSpeed = 1;
+
+const audio = document.getElementById("audio");
+const seekbar = document.getElementById("seekbar");
+const current = document.getElementById("current");
+const remaining = document.getElementById("remaining");
+const playIcon = document.getElementById("playIcon");
+
+/* ----------- BARRA PROGRESSIVA ----------- */
+function updateProgressBar() {
+    const progress = (fakeCurrentTime / TOTAL_FAKE_DURATION) * 100;
+    seekbar.style.setProperty("--progress", progress + "%");
+}
+
+/* FORMATTAZIONE TEMPO */
+function formatFakeTime(sec) {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2,"0");
+    if (h > 0) return `${h}:${m.toString().padStart(2,"0")}:${s}`;
+    return `${m}:${s}`;
+}
+
+/* ----------- UPDATE TIMELINE ----------- */
+function updateFakeTimeline() {
+    seekbar.value = fakeCurrentTime;
+    updateProgressBar();
+    current.textContent = formatFakeTime(fakeCurrentTime);
+    remaining.textContent =
+        "– " + formatFakeTime(TOTAL_FAKE_DURATION - fakeCurrentTime);
+}
+
+/* ----------- TIMER DELLA TIMELINE ----------- */
+function startFakeTimer() {
+    if (fakeInterval) clearInterval(fakeInterval);
+
+    fakeInterval = setInterval(() => {
+        fakeCurrentTime = Math.min(fakeCurrentTime + timelineSpeed, TOTAL_FAKE_DURATION);
+        updateFakeTimeline();
+    }, 1000);
+}
+
+/* ---------------- PLAY BUTTON ---------------- */
+document.getElementById("playBtn").onclick = () => {
+    if (!fakeInterval) {
+
+        audio.playbackRate = 1.0;
+        audio.play();
+
+        startFakeTimer();
+
+        playIcon.innerHTML = `
+            <rect x="13" y="10" width="7" height="22" fill="#060E17"></rect>
+            <rect x="23" y="10" width="7" height="22" fill="#060E17"></rect>
+        `;
+    } else {
+        audio.pause();
+        clearInterval(fakeInterval);
+        fakeInterval = null;
+        playIcon.innerHTML = `
+            <polygon points="15,9 34,21 15,33" fill="#060E17"></polygon>
+        `;
+    }
+};
+
+/* ---------------- SKIP ---------------- */
+document.getElementById("forward30").onclick = () => {
+    fakeCurrentTime = Math.min(fakeCurrentTime + 30, TOTAL_FAKE_DURATION);
+    updateFakeTimeline();
+};
+
+document.getElementById("back30").onclick = () => {
+    fakeCurrentTime = Math.max(fakeCurrentTime - 30, 0);
+    updateFakeTimeline();
+};
+
+/* ---------------- DRAG TIMELINE ---------------- */
+seekbar.oninput = () => {
+    fakeCurrentTime = Number(seekbar.value);
+    updateFakeTimeline();
+};
+
+/* ---------------- CHAPTERS ---------------- */
+const chapterTimes = [
+  "3:40","1:16","0:53","2:04","1:03","1:29","0:58","2:16","1:33","1:43",
+  "0:49","1:35","1:31","3:15","1:26","1:37","1:12","3:38","1:44","1:43",
+  "1:06","1:08","1:22","2:22","1:07","2:13","1:11","1:03","1:36","1:39",
+  "1:02","1:47","0:50","1:19","1:12","3:14","0:50","0:46","2:26","0:47",
+  "0:56","1:41","1:09","0:52","2:04","0:34","1:31","1:02","1:17","1:01",
+  "3:05","0:57","0:58","1:52","1:09","0:57","1:39","1:32","1:13","2:10",
+  "6:33","5:30","1:15","2:10"
+];
+
+function toSeconds(x){
+    const [m,s]=x.split(":").map(Number);
+    return m*60+s;
+}
+
+let chapterStartTimes=[]; let sum=0;
+chapterTimes.forEach((t,i)=>{ chapterStartTimes[i] = sum; sum += toSeconds(t); });
+
+const chapterList = document.getElementById("chapterList");
+
+chapterTimes.forEach((t,i)=>{
+    const row=document.createElement("div");
+    row.className="chapter-row";
+    row.innerHTML=`<span>Chapter ${i+1}</span><span>${t}</span>`;
+    row.onclick=()=>{ jumpToChapter(i+1); closeMenus(); };
+    chapterList.appendChild(row);
+});
+
+function jumpToChapter(c){
+    currentChapter = c;
+    fakeCurrentTime = chapterStartTimes[c-1];
+    updateFakeTimeline();
+    document.getElementById("chapterButton").textContent=`≡ Chapter ${c}`;
+}
+
+/* FRECCE */
+document.getElementById("prevChapter").onclick = () => {
+    if (currentChapter > 1) jumpToChapter(currentChapter - 1);
+};
+
+document.getElementById("nextChapter").onclick = () => {
+    if (currentChapter < chapterTimes.length) jumpToChapter(currentChapter + 1);
+};
+
+/* ---------------- UNDERLINE ---------------- */
+const underline=document.getElementById("chapterUnderline");
+const tabChapters=document.getElementById("tabChapters");
+
+function centerUnderline(){
+    const rect = tabChapters.getBoundingClientRect();
+    underline.style.marginLeft =
+      (rect.left + rect.width/2 - underline.offsetWidth/2) + "px";
+}
+window.addEventListener("load", centerUnderline);
+window.addEventListener("resize", centerUnderline);
+
+/* ---------------- SPEED MENU ---------------- */
+const speedMenu=document.getElementById("speedMenu");
+const speedGrid=document.getElementById("speedGrid");
+const speedValues=[0.75,1,1.25,1.5,1.75,2,2.5,3];
+
+speedValues.forEach(v=>{
+    const btn=document.createElement("div");
+    btn.className="speed-btn";
+    btn.textContent=v+"×";
+    btn.onclick=()=>{
+
+        timelineSpeed = v;
+
+        if (fakeInterval) startFakeTimer();
+
+        document.getElementById("speedNumber").textContent =
+            v.toString().replace(".",",");
+
+        highlightSpeed(v);
+        closeMenus();
+    };
+    speedGrid.appendChild(btn);
+});
+
+function highlightSpeed(v){
+    document.querySelectorAll(".speed-btn").forEach(b=>{
+        b.classList.remove("active");
+        if (b.textContent.startsWith(v.toString())) b.classList.add("active");
+    });
+}
+
+/* ---------------- MENU OPEN/CLOSE ---------------- */
+const overlay=document.getElementById("overlay");
+const chapterMenu=document.getElementById("chapterMenu");
+
+function openMenu(menu){
+    overlay.style.opacity="1";
+    overlay.style.pointerEvents="auto";
+    menu.style.bottom="0";
+}
+
+function closeMenus(){
+    overlay.style.opacity="0";
+    overlay.style.pointerEvents="none";
+    chapterMenu.style.bottom="-90%";
+    speedMenu.style.bottom="-60%";
+}
+
+document.getElementById("chapterButton").onclick=()=>openMenu(chapterMenu);
+document.getElementById("closeChapterMenu").onclick=closeMenus;
+document.getElementById("speedButton").onclick=()=>openMenu(speedMenu);
+overlay.onclick=closeMenus;
+
+</script>
+
+</div>
+</body>
+</html>
